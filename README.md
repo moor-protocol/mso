@@ -1,11 +1,40 @@
 # Metasquare Oracle (`mso`)
 
+Self-hosted, high-performance, multi-asset oracle microservice designed for low-latency decentralized applications and prediction markets. Runs efficiently on lightweight Linux nodes (Raspberry Pi 5 with NVMe SSD) and exposes real-time streaming and REST gateways through Cloudflare Tunnels.
+
 [![CI](https://github.com/Niraj-Kamdar/mso/actions/workflows/ci.yml/badge.svg)](https://github.com/Niraj-Kamdar/mso/actions/workflows/ci.yml)
 [![Docker](https://github.com/Niraj-Kamdar/mso/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/Niraj-Kamdar/mso/actions/workflows/docker-publish.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Container Image](https://img.shields.io/badge/ghcr.io-niraj--kamdar%2Fmso-blue?logo=docker)](https://github.com/Niraj-Kamdar/mso/pkgs/container/mso)
 
-Self-hosted, high-performance, multi-asset oracle microservice designed for low-latency decentralized applications and prediction markets. Runs efficiently on lightweight Linux nodes (Raspberry Pi 5 with NVMe SSD) and exposes real-time streaming and REST gateways through Cloudflare Tunnels.
+> **Part of Moor** — leveraged funds on Solana. The protocol hub, moor-program (private), holds the program, SDK
+> and docs. Public entry points: the web app at [app.moor.fund](https://app.moor.fund) and the
+> [whitepaper](https://github.com/moor-protocol/whitepaper). Related: moor-daemon (private) · mockamm (private)
+
+## Contents
+
+- [Where it fits](#where-it-fits)
+- [Features](#features)
+- [Quickstart](#quickstart)
+- [Configuration](#configuration)
+- [API Key Management](#api-key-management)
+- [API Reference](#api-reference)
+- [Deployment on Raspberry Pi 5 with Cloudflare Tunnel](#deployment-on-raspberry-pi-5-with-cloudflare-tunnel)
+- [Documentation](#documentation)
+- [License](#license)
+
+## Where it fits
+
+mso is a general-purpose oracle service: any application can run it and read prices over REST or gRPC with an API
+key. Moor also uses it to feed its devnet prices. On the operator's Raspberry Pi, moor-daemon reads prices from mso
+over the local Docker network and pushes them on-chain to Solana devnet; Moor is not deployed to mainnet.
+
+```
+mso (:4000 REST, :50051 gRPC)
+  │
+  ▼ (Docker network: http://mso:4000, API key)
+moor-daemon ──► Solana devnet (mockamm's house Pyth accounts)
+```
 
 ---
 
@@ -140,6 +169,7 @@ All requests must provide an active API key via `x-api-key: <KEY>` header, `Auth
 ## Deployment on Raspberry Pi 5 with Cloudflare Tunnel
 
 ### Systemd Service (`/etc/systemd/system/mso.service`)
+
 ```ini
 [Unit]
 Description=Metasquare Oracle (mso)
@@ -159,6 +189,7 @@ WantedBy=multi-user.target
 ```
 
 ### Cloudflare Tunnel Config (`~/.cloudflared/config.yml`)
+
 ```yaml
 tunnel: <TUNNEL_UUID>
 credentials-file: /home/pi/.cloudflared/<TUNNEL_UUID>.json
@@ -168,6 +199,15 @@ ingress:
     service: http://localhost:4000
   - service: http_status:404
 ```
+
+---
+
+## Documentation
+
+- Interactive API reference: served at `/` or `/docs` on port `4000`; OpenAPI spec at `/openapi.json`
+- Default configuration (and reference for every key): [`src/config.default.toml`](src/config.default.toml)
+- gRPC service definition: [`proto/oracle.proto`](proto/oracle.proto)
+- Docker Compose file: [`docker-compose.yml`](docker-compose.yml)
 
 ---
 
